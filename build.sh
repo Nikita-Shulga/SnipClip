@@ -7,8 +7,13 @@ APP=build/SnipClip.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-swiftc -O -swift-version 5 -target "$(uname -m)-apple-macos13.0" \
-    Sources/*.swift -o "$APP/Contents/MacOS/SnipClip"
+# Universal binary, so the same app runs on Apple Silicon and Intel Macs.
+for ARCH in arm64 x86_64; do
+    swiftc -O -swift-version 5 -target "$ARCH-apple-macos13.0" \
+        Sources/*.swift -o "build/SnipClip-$ARCH"
+done
+lipo -create build/SnipClip-arm64 build/SnipClip-x86_64 -output "$APP/Contents/MacOS/SnipClip"
+rm build/SnipClip-arm64 build/SnipClip-x86_64
 cp Info.plist "$APP/Contents/Info.plist"
 
 swift Tools/make_icon.swift build/AppIcon.iconset
